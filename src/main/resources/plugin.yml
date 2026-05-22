@@ -1,0 +1,5 @@
+name: "${project.name}"
+version: "${project.version}"
+authors: ["Koshak_Mine", "Zwuiix"]
+api: ["1.0.0"]
+main: com.koshakmine.virtualinventory.Loader
