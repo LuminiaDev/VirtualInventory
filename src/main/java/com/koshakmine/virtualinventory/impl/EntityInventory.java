@@ -24,12 +24,6 @@ public class EntityInventory extends VirtualInventory {
     }
 
     @Override
-    public EntityInventory setMode(Mode mode) {
-        this.mode = (mode == null ? Mode.MENU : mode);
-        return this;
-    }
-
-    @Override
     protected ContainerSlotType getSlotType() {
         return ContainerSlotType.LEVEL_ENTITY;
     }
@@ -39,9 +33,9 @@ public class EntityInventory extends VirtualInventory {
         ArrayList<DataPacket> packets = new ArrayList<>();
 
         EntityMetadata metadata = new EntityMetadata();
-        metadata.putString(Entity.DATA_NAMETAG, this.prefix + name);
+        metadata.putString(Entity.DATA_NAMETAG, this.getPrefix() + name);
         metadata.putByte(Entity.DATA_CONTAINER_TYPE, 0);
-        metadata.putInt(Entity.DATA_CONTAINER_BASE_SIZE, size);
+        metadata.putInt(Entity.DATA_CONTAINER_BASE_SIZE, getSize());
 
         AddEntityPacket addEntity = new AddEntityPacket();
         addEntity.entityUniqueId = eId;

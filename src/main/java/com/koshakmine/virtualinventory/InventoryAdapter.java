@@ -340,7 +340,7 @@ public class InventoryAdapter implements Inventory {
 
     @Override
     public Set<Player> getViewers() {
-        return Set.copyOf(v.viewers);
+        return Set.copyOf(v.getViewers());
     }
 
     @Override

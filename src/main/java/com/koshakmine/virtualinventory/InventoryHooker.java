@@ -7,18 +7,12 @@ import cn.nukkit.event.EventHandler;
 import cn.nukkit.event.Listener;
 import cn.nukkit.event.player.PlayerQuitEvent;
 import cn.nukkit.event.server.DataPacketReceiveEvent;
-import cn.nukkit.inventory.Inventory;
 import cn.nukkit.network.protocol.ContainerClosePacket;
 import cn.nukkit.network.protocol.DataPacket;
 import cn.nukkit.network.protocol.InventoryTransactionPacket;
 import cn.nukkit.network.protocol.types.NetworkInventoryAction;
 import cn.nukkit.plugin.Plugin;
 import cn.nukkit.registry.Registries;
-import com.google.common.collect.BiMap;
-
-import java.lang.reflect.Field;
-import java.util.Arrays;
-import java.util.Set;
 
 public class InventoryHooker implements Listener {
 
@@ -91,11 +85,14 @@ public class InventoryHooker implements Listener {
             VirtualInventory inventory = manager.getInventory(player);
             if (inventory != null) {
                 if (inventory.isViewer(player)) {
-                    ev.setCancelled(processTransaction(player, transactionPacket.actions));
-                    Server.getInstance().getScheduler().scheduleDelayedTask(() -> {
-                        player.getCursorInventory().sendSlot(0, player);
-                        player.getUIInventory().sendSlot(0, player);
-                    }, 1);
+                    boolean cancelled = processTransaction(player, transactionPacket.actions);
+                    ev.setCancelled(cancelled);
+
+                        Server.getInstance().getScheduler().scheduleDelayedTask(() -> {
+                            player.getCursorInventory().sendSlot(0, player);
+                            player.getUIInventory().sendSlot(0, player);
+                        }, 1);
+
                 } else {
                     ev.setCancelled();
                 }

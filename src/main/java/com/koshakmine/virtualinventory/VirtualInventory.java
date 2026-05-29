@@ -9,6 +9,8 @@ import cn.nukkit.network.protocol.InventorySlotPacket;
 import cn.nukkit.network.protocol.types.inventory.ContainerSlotType;
 import cn.nukkit.network.protocol.types.inventory.ContainerType;
 import cn.nukkit.network.protocol.types.inventory.FullContainerName;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -19,18 +21,15 @@ import java.util.function.Predicate;
 
 abstract public class VirtualInventory {
 
-    protected final ArrayList<Player> viewers = new ArrayList<>();
-    protected final Map<Player, Integer> windowIds = new HashMap<>();
-    protected String name;
-    protected String prefix;
-    protected int size;
-    protected Item[] contents;
-    protected Predicate<InventoryClick> onClick = null;
-    protected Consumer<Player> onClose = null;
-    protected Mode mode = Mode.MENU;
-    protected final Map<Player, InventoryAdapter> adapters = new WeakHashMap<>();
-
-    public enum Mode {MENU, STORAGE}
+    @Getter private final ArrayList<Player> viewers = new ArrayList<>();
+    private final Map<Player, Integer> windowIds = new HashMap<>();
+    @Getter private String name;
+    @Getter private String prefix;
+    @Getter private int size;
+    @Getter private Item[] contents;
+    @Setter private Predicate<InventoryClick> defaultItemHandler = null;
+    @Setter private Consumer<Player> closeHandler = null;
+    private final Map<Player, InventoryAdapter> adapters = new WeakHashMap<>();
 
     public VirtualInventory(int size) {
         this(size, "Chest");
@@ -44,32 +43,12 @@ abstract public class VirtualInventory {
         int length = Math.min(rows, 6);
         this.prefix = "§" + length + "§" + scroll + "§r§r§r§r§r§r§r§r§r§r";
 
+        System.out.println(prefix);
         contents = new Item[size];
     }
 
     public int getWindowId(Player p) {
         return windowIds.getOrDefault(p, (int) Byte.MIN_VALUE);
-    }
-
-    public Mode getMode() {
-        return mode;
-    }
-
-    public VirtualInventory setMode(Mode mode) {
-        this.mode = (mode == null ? Mode.MENU : mode);
-        return this;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public int getSize() {
-        return size;
-    }
-
-    public Item[] getContents() {
-        return contents;
     }
 
     public Item getItem(int slot) {
@@ -108,17 +87,13 @@ abstract public class VirtualInventory {
 
         byte windowId = Byte.MIN_VALUE;
 
-        if (mode == Mode.STORAGE) {
-            InventoryAdapter adapter = adapters.computeIfAbsent(player, k -> new InventoryAdapter(this));
-            player.addWindow(adapter);
+        InventoryAdapter adapter = adapters.computeIfAbsent(player, k -> new InventoryAdapter(this));
+        player.addWindow(adapter);
 
-            int winId = player.getWindowId(adapter);
-            if (winId > 0) {
-                windowIds.put(player, winId);
-                windowId = (byte) winId;
-            } else {
-                windowIds.put(player, (int) Byte.MIN_VALUE);
-            }
+        int winId = player.getWindowId(adapter);
+        if (winId > 0) {
+            windowIds.put(player, winId);
+            windowId = (byte) winId;
         } else {
             windowIds.put(player, (int) Byte.MIN_VALUE);
         }
@@ -136,7 +111,7 @@ abstract public class VirtualInventory {
         syncContents();
     }
 
-    public void close(Player player) {
+    protected void close(Player player) {
         if (!viewers.contains(player)) return;
 
         InventoryManager.getInstance().resetDispatcher(player);
@@ -156,9 +131,9 @@ abstract public class VirtualInventory {
         onClose(player);
     }
 
-    public void onClose(Player player) {
+    protected void onClose(Player player) {
         if (!viewers.contains(player)) return;
-        if (onClose != null) onClose.accept(player);
+        if (closeHandler != null) closeHandler.accept(player);
         viewers.remove(player);
 
         int winId = getWindowId(player);
@@ -237,7 +212,7 @@ abstract public class VirtualInventory {
 
         var event = new InventoryClick(this, player, slot, getItem(slot));
 
-        if (onClick != null) return onClick.test(event);
+        if (defaultItemHandler != null) return defaultItemHandler.test(event);
         return false;
     }
 
