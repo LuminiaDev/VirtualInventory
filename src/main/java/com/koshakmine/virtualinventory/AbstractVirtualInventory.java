@@ -43,7 +43,7 @@ abstract public class AbstractVirtualInventory {
     private Item[] contents;
 
     @Getter(AccessLevel.NONE)
-    private Predicate<ItemHandler> defaultItemHandler = null;
+    private Predicate<ItemHandler> defaultItemHandler = handler -> true;
 
     @Getter(AccessLevel.NONE)
     @Setter(AccessLevel.NONE)
