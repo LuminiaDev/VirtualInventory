@@ -10,23 +10,17 @@ import cn.nukkit.network.protocol.RemoveEntityPacket;
 import cn.nukkit.network.protocol.types.EntityLink;
 import cn.nukkit.network.protocol.types.inventory.ContainerSlotType;
 import cn.nukkit.network.protocol.types.inventory.ContainerType;
-import com.koshakmine.virtualinventory.VirtualInventory;
+import com.koshakmine.virtualinventory.AbstractVirtualInventory;
 
 import java.util.ArrayList;
 import java.util.concurrent.ThreadLocalRandom;
 
-public class EntityInventory extends VirtualInventory {
+public class VirtualInventory extends AbstractVirtualInventory {
 
     public long eId = ThreadLocalRandom.current().nextLong(Long.MAX_VALUE - 1000L, Long.MAX_VALUE);
 
-    public EntityInventory(int size, String name) {
+    public VirtualInventory(int size, String name) {
         super(size, name);
-    }
-
-    @Override
-    public EntityInventory setMode(Mode mode) {
-        this.mode = (mode == null ? Mode.MENU : mode);
-        return this;
     }
 
     @Override
@@ -39,25 +33,18 @@ public class EntityInventory extends VirtualInventory {
         ArrayList<DataPacket> packets = new ArrayList<>();
 
         EntityMetadata metadata = new EntityMetadata();
-        metadata.putString(Entity.DATA_NAMETAG, this.prefix + name);
+        metadata.putString(Entity.DATA_NAMETAG, this.getPrefix() + name);
         metadata.putByte(Entity.DATA_CONTAINER_TYPE, 0);
-        metadata.putInt(Entity.DATA_CONTAINER_BASE_SIZE, size);
+        metadata.putInt(Entity.DATA_CONTAINER_BASE_SIZE, getSize());
 
         AddEntityPacket addEntity = new AddEntityPacket();
         addEntity.entityUniqueId = eId;
         addEntity.entityRuntimeId = eId;
-        addEntity.id = "kora:virtual_chest";
+        addEntity.id = "vi:virtual_inventory";
         addEntity.type = 0;
         addEntity.x = (float) player.x;
         addEntity.y = (float) player.y;
         addEntity.z = (float) player.z;
-        addEntity.speedX = 0;
-        addEntity.speedY = 0;
-        addEntity.speedZ = 0;
-        addEntity.yaw = 0;
-        addEntity.pitch = 0;
-        addEntity.headYaw = 0;
-        addEntity.bodyYaw = 0;
         addEntity.metadata = metadata;
         addEntity.links = new EntityLink[]{new EntityLink(player.getId(), eId, EntityLink.TYPE_RIDER, true, true, 0)};
 

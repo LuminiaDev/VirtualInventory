@@ -2,9 +2,7 @@ package com.koshakmine.virtualinventory;
 
 import cn.nukkit.Player;
 import cn.nukkit.Server;
-import cn.nukkit.network.protocol.ContainerClosePacket;
 import cn.nukkit.network.protocol.DataPacket;
-import cn.nukkit.network.protocol.types.inventory.ContainerType;
 import cn.nukkit.scheduler.TaskHandler;
 
 final public class InventoryDispatcher {
@@ -30,7 +28,7 @@ final public class InventoryDispatcher {
             return;
         }
 
-        VirtualInventory inv = InventoryManager.getInstance().getInventory(this.player);
+        AbstractVirtualInventory inv = InventoryManager.getInstance().getInventory(this.player);
         if (inv == null || !inv.isViewer(this.player)) {
             this.taskHandler.cancel();
             return;

@@ -10,10 +10,10 @@ import java.util.*;
 
 public class InventoryAdapter implements Inventory {
 
-    private final VirtualInventory v;
+    private final AbstractVirtualInventory v;
     private InventoryHolder holder;
 
-    public InventoryAdapter(VirtualInventory v) {
+    public InventoryAdapter(AbstractVirtualInventory v) {
         this.v = v;
     }
 
@@ -340,7 +340,7 @@ public class InventoryAdapter implements Inventory {
 
     @Override
     public Set<Player> getViewers() {
-        return Set.copyOf(v.viewers);
+        return Set.copyOf(v.getViewers());
     }
 
     @Override

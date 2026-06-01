@@ -9,10 +9,10 @@ import cn.nukkit.nbt.tag.CompoundTag;
 public class DummyEntity extends Entity implements CustomEntity {
 
     public static final EntityDefinition definition = new EntityDefinition(
-            "kora:virtual_chest",
+            "vi:virtual_inventory",
             null,
             false,
-            "virtual_chest",
+            "virtual_inventory",
             DummyEntity.class
     );
 
