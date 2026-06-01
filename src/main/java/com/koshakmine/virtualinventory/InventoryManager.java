@@ -1,25 +1,24 @@
 package com.koshakmine.virtualinventory;
 
 import cn.nukkit.Player;
-import cn.nukkit.item.Item;
 
 import java.util.HashMap;
 
 public class InventoryManager {
 
     private static InventoryManager instance = new InventoryManager();
-    private HashMap<Player, VirtualInventory> inventories = new HashMap<>();
+    private HashMap<Player, AbstractVirtualInventory> inventories = new HashMap<>();
     private HashMap<Player, InventoryDispatcher> dispatchers = new HashMap<>();
 
     public static InventoryManager getInstance() {
         return instance;
     }
 
-    public VirtualInventory getInventory(Player player) {
+    public AbstractVirtualInventory getInventory(Player player) {
         return inventories.get(player);
     }
 
-    public void setInventory(Player player, VirtualInventory inventory) {
+    public void setInventory(Player player, AbstractVirtualInventory inventory) {
         inventories.put(player, inventory);
     }
 

@@ -9,6 +9,8 @@ import cn.nukkit.network.protocol.InventorySlotPacket;
 import cn.nukkit.network.protocol.types.inventory.ContainerSlotType;
 import cn.nukkit.network.protocol.types.inventory.ContainerType;
 import cn.nukkit.network.protocol.types.inventory.FullContainerName;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -19,31 +21,51 @@ import java.util.WeakHashMap;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
-abstract public class VirtualInventory {
+@Getter
+@Setter
+abstract public class AbstractVirtualInventory {
 
-    @Getter private final ArrayList<Player> viewers = new ArrayList<>();
+    @Setter(AccessLevel.NONE)
+    private final ArrayList<Player> viewers = new ArrayList<>();
+
+    @Getter(AccessLevel.NONE)
     private final Map<Player, Integer> windowIds = new HashMap<>();
-    @Getter private String name;
-    @Getter private String prefix;
-    @Getter private int size;
-    @Getter private Item[] contents;
-    @Setter private Predicate<InventoryClick> defaultItemHandler = null;
-    @Setter private Consumer<Player> closeHandler = null;
+
+    @Setter(AccessLevel.NONE)
+    private String name;
+
+    private String prefix = "";
+
+    @Setter(AccessLevel.NONE)
+    private int size;
+
+    @Setter(AccessLevel.NONE)
+    private Item[] contents;
+
+    @Getter(AccessLevel.NONE)
+    private Predicate<ItemHandler> defaultItemHandler = null;
+
+    @Getter(AccessLevel.NONE)
+    @Setter(AccessLevel.NONE)
+    private Int2ObjectOpenHashMap<Predicate<ItemHandler>> slotItemHandlers = new Int2ObjectOpenHashMap<>();
+
+    @Getter(AccessLevel.NONE)
+    private Consumer<Player> closeHandler = null;
+
+    @Getter(AccessLevel.NONE)
+    private Consumer<Player> openHandler = null;
+
+    @Getter(AccessLevel.NONE)
     private final Map<Player, InventoryAdapter> adapters = new WeakHashMap<>();
 
-    public VirtualInventory(int size) {
+    public AbstractVirtualInventory(int size) {
         this(size, "Chest");
     }
 
-    public VirtualInventory(int size, String name) {
+    public AbstractVirtualInventory(int size, String name) {
         this.size = size;
         this.name = name;
-        int rows = size / 9 + (size % 9 == 0 ? 0 : 1);
-        int scroll = rows > 6 ? 1 : 0;
-        int length = Math.min(rows, 6);
-        this.prefix = "§" + length + "§" + scroll + "§r§r§r§r§r§r§r§r§r§r";
 
-        System.out.println(prefix);
         contents = new Item[size];
     }
 
@@ -78,6 +100,20 @@ abstract public class VirtualInventory {
         return true;
     }
 
+    public boolean setItem(int slot, Item item, Predicate<ItemHandler> handler) {
+        return setItem(slot, item, handler, true);
+    }
+
+    public boolean setItem(int slot, Item item, Predicate<ItemHandler> handler, boolean sync) {
+        boolean success = this.setItem(slot, item, sync);
+        if (success) this.addItemHandler(slot, handler);
+        return success;
+    }
+
+    public void addItemHandler(int slot, Predicate<ItemHandler> handler) {
+        slotItemHandlers.put(slot, handler);
+    }
+
     public void open(Player player) {
         open(player, name);
     }
@@ -107,6 +143,8 @@ abstract public class VirtualInventory {
 
         viewers.add(player);
         invManager.setInventory(player, this);
+
+        if (openHandler != null) openHandler.accept(player);
 
         syncContents();
     }
@@ -142,7 +180,8 @@ abstract public class VirtualInventory {
             if (adapter != null) {
                 try {
                     player.removeWindow(adapter);
-                } catch (Throwable ignored) {}
+                } catch (Throwable ignored) {
+                }
             }
         }
 
@@ -206,11 +245,13 @@ abstract public class VirtualInventory {
         return viewers.contains(player);
     }
 
-    public boolean onClick(Player player, int slot) {
+    public boolean handleTransaction(Player player, int slot, Item newItem) {
         if (slot < 0 || slot >= size) return false;
         if (!viewers.contains(player)) return false;
 
-        var event = new InventoryClick(this, player, slot, getItem(slot));
+        var event = new ItemHandler(this, player, slot, getItem(slot), newItem);
+
+        if(slotItemHandlers.containsKey(slot)) return slotItemHandlers.get(slot).test(event);
 
         if (defaultItemHandler != null) return defaultItemHandler.test(event);
         return false;

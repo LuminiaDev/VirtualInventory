@@ -10,10 +10,10 @@ import java.util.*;
 
 public class InventoryAdapter implements Inventory {
 
-    private final VirtualInventory v;
+    private final AbstractVirtualInventory v;
     private InventoryHolder holder;
 
-    public InventoryAdapter(VirtualInventory v) {
+    public InventoryAdapter(AbstractVirtualInventory v) {
         this.v = v;
     }
 
