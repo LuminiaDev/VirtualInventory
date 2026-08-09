@@ -360,6 +360,7 @@ public class InventoryAdapter implements Inventory {
 
     @Override
     public void onClose(Player player) {
+        v.onClose(player);
     }
 
     @Override

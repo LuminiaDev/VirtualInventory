@@ -121,18 +121,17 @@ abstract public class AbstractVirtualInventory {
     public void open(Player player, String name) {
         if (viewers.contains(player)) return;
 
-        byte windowId = Byte.MIN_VALUE;
+        InventoryManager manager = InventoryManager.getInstance();
+        AbstractVirtualInventory inventory = manager.getInventory(player);
+        if(inventory != null) inventory.close(player);
 
         InventoryAdapter adapter = adapters.computeIfAbsent(player, k -> new InventoryAdapter(this));
-        player.addWindow(adapter);
 
-        int winId = player.getWindowId(adapter);
-        if (winId > 0) {
-            windowIds.put(player, winId);
-            windowId = (byte) winId;
-        } else {
-            windowIds.put(player, (int) Byte.MIN_VALUE);
-        }
+        int winId = player.addWindow(adapter);
+        if(winId <= -1) return;
+
+        windowIds.put(player, winId);
+        byte windowId = (byte) winId;
 
         DataPacket[] packets = sendInventory(player, name, windowId);
 
