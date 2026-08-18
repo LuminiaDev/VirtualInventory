@@ -367,4 +367,8 @@ public class InventoryAdapter implements Inventory {
     public void onSlotChange(int slot, Item oldItem, boolean send) {
         if (send) v.syncSlot(slot);
     }
+
+    public AbstractVirtualInventory getVirtualInventory() {
+        return v;
+    }
 }

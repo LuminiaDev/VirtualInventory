@@ -5,6 +5,7 @@ import cn.nukkit.Server;
 import cn.nukkit.entity.custom.EntityDefinition;
 import cn.nukkit.event.player.PlayerQuitEvent;
 import cn.nukkit.event.server.DataPacketReceiveEvent;
+import cn.nukkit.inventory.Inventory;
 import cn.nukkit.network.protocol.ContainerClosePacket;
 import cn.nukkit.network.protocol.DataPacket;
 import cn.nukkit.network.protocol.InventoryTransactionPacket;
@@ -12,6 +13,11 @@ import cn.nukkit.network.protocol.types.NetworkInventoryAction;
 import cn.nukkit.plugin.Plugin;
 import cn.nukkit.plugin.PluginManager;
 import cn.nukkit.registry.Registries;
+import com.google.common.collect.BiMap;
+import com.google.common.collect.HashBiMap;
+
+import java.lang.reflect.Field;
+import java.util.HashMap;
 
 public class InventoryHooker {
     public InventoryHooker(Plugin plugin) {
@@ -78,27 +84,43 @@ public class InventoryHooker {
     }
 
     private boolean processTransaction(Player player, NetworkInventoryAction[] actions) {
-        InventoryManager manager = InventoryManager.getInstance();
-        AbstractVirtualInventory inventory = manager.getInventory(player);
-
-        if (inventory == null || !inventory.isViewer(player)) return true;
-
-        int winId = inventory.getWindowId(player);
-
         boolean cancelled = false;
-        for (NetworkInventoryAction action : actions) {
-            if(action.sourceType == NetworkInventoryAction.SOURCE_CREATIVE) {
-                return true;
-            }
-            if (winId > 0 && action.windowId == (byte) winId) {
-                if(!inventory.handleTransaction(player, action.inventorySlot, action.newItem)) {
-                    cancelled = true;
+
+        try {
+            Field field = player.getClass().getDeclaredField("windowIndex");
+            field.setAccessible(true);
+            BiMap<Integer, Inventory> windows = HashBiMap.create((BiMap<Integer, Inventory>) field.get(player));
+
+            for(Inventory inv : windows.values()) {
+                if(inv instanceof InventoryAdapter adapter) {
+                    AbstractVirtualInventory inventory = adapter.getVirtualInventory();
+
+                    if (inventory == null || !inventory.isViewer(player)) return true;
+
+                    int winId = inventory.getWindowId(player);
+
+                    for (NetworkInventoryAction action : actions) {
+                        if (action.sourceType == NetworkInventoryAction.SOURCE_CREATIVE) {
+                            return true;
+                        }
+                        if (winId > 0 && action.windowId == (byte) winId) {
+                            if (!inventory.handleTransaction(player, action.inventorySlot, action.newItem)) {
+                                cancelled = true;
+                            }
+                        } else {
+                            Inventory inv_ = player.getWindowById(action.windowId);
+                            if(inv_ != null) {
+                                inv_.sendSlot(action.inventorySlot, player);
+                            }
+                        }
+                    }
+                    inventory.syncContents();
                 }
-            } else {
-                player.getWindowById(action.windowId).sendSlot(action.inventorySlot, player);
             }
+        } catch (Exception e) {
+            Server.getInstance().getLogger().logException(e);
         }
-        inventory.syncContents();
+
         return cancelled;
     }
 }
