@@ -18,7 +18,7 @@ repositories {
 }
 
 dependencies {
-    implementation("com.koshakmine:Lumi:1.6.0-SNAPSHOT")
+    implementation("com.koshakmine:Lumi:1.6.7-SNAPSHOT")
     implementation("org.jetbrains:annotations:26.0.2")
     implementation("org.projectlombok:lombok:1.18.36")
     annotationProcessor("org.projectlombok:lombok:1.18.36")
@@ -50,7 +50,7 @@ publishing {
     repositories {
         maven {
             name = "lumi"
-            url = uri("https://repo.lumi.su/private")
+            url = uri("https://repo.lumi.su/releases")
             credentials {
                 username = System.getenv("MAVEN_USERNAME")
                 password = System.getenv("MAVEN_PASSWORD")
